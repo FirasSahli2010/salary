@@ -16,7 +16,7 @@ use Symfony\Component\Console\Input\InputDefinition;
 
 #[AsCommand(
     name: 'GenerateSalarySheetCommand',
-    description: 'GEnerate Salarry and bonus sheet',
+    description: 'Generate Salarry and bonus sheet for a month of a year',
 )]
 class GenerateSalarySheetCommand extends Command
 {
@@ -37,7 +37,7 @@ class GenerateSalarySheetCommand extends Command
         $this
             ->setDescription('Generates salary and bonus payment sheet')
             ->setHelp(
-                'This command helps you generate a sheet contains alary and bonus payment days based on provided arguments'
+                'This command helps you generate a sheet contains an salary and bonus payment days based on provided arguments'
             )
             ->addOption('year', null, InputOption::VALUE_NONE, 'Year ')
             ->addOption('month', null, InputOption::VALUE_NONE, 'Month ')
