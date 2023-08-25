@@ -2,32 +2,29 @@
 
 namespace App\Command;
 
-use App\Service\SalaryHandlerService;
 use App\Service\SalarySheetGeneratorService;
 use Symfony\Component\Console\Attribute\AsCommand;
 use Symfony\Component\Console\Command\Command;
-use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Console\Style\SymfonyStyle;
-
 use Symfony\Component\Console\Input\InputDefinition;
 
 #[AsCommand(
     name: 'GenerateSalarySheetCommand',
-    description: 'Generate Salarry and bonus sheet for a month of a year',
+    description: 'Generate Salary and bonus sheet for a year',
 )]
 class GenerateSalarySheetCommand extends Command
 {
     protected static $defaultName = 'generateSalarySheet';
     private SalarySheetGeneratorService $salarySheetGenerator;
-
+    protected static $defaultPathToFile = 'GenerateSalarySheetCommand';
 
     public function __construct(
+        $projectDir,
         SalarySheetGeneratorService $salarySheetGenerator
-    ) 
-    {
+    ) {
         parent::__construct();
         $this->salarySheetGenerator = $salarySheetGenerator;
     }
@@ -39,66 +36,69 @@ class GenerateSalarySheetCommand extends Command
             ->setHelp(
                 'This command helps you generate a sheet contains an salary and bonus payment days based on provided arguments'
             )
-            ->addOption('year', null, InputOption::VALUE_NONE, 'Year ')
-            ->addOption('month', null, InputOption::VALUE_NONE, 'Month ')
-            ->addOption('file', null, InputOption::VALUE_NONE, 'file name')
             ->setDefinition(
                 new InputDefinition(
                     [
                         new InputOption(
-                            'file',
+                            'whichYear',
+                            'w',
+                            InputOption::VALUE_OPTIONAL,
+                            'For which year, default current year, default current year',
+                            intval(date('Y'))
+                        ),
+                        new InputOption(
+                            'fromWhichMonth',
                             'f',
                             InputOption::VALUE_OPTIONAL,
-                            'File name, where the sarary sheet will be generated'
+                            'from which month to start generation, if current year default ceurrent month, otherwise default = 01',
+                            1
+                        ),
+                        new InputOption(
+                            'csv',
+                            'c',
+                            InputOption::VALUE_NONE,
+                            'Generatet the file in CSV format'
+                        ),
+                        new InputOption(
+                            'xls',
+                            'x',
+                            InputOption::VALUE_NONE,
+                            'Generatet the file in XSL format'
                         ),
                         new InputOption(
                             'year',
                             'y',
-                            InputOption::VALUE_OPTIONAL,
-                            'sheet year, for which the sheet is generated'
-                        ),
-                        new InputOption(
-                            'month',
-                            'm',
-                            InputOption::VALUE_OPTIONAL,
-                            'sheet month, for which the sheet is generated'
+                            InputOption::VALUE_NONE,
+                            'Generate sheet for a whole given year'
                         )
                     ]
                 )
             );
-        ;
     }
 
-    protected function generateReport($fileName = 'salarysheet', $year = null, $month = null) {
-
-        if (!$year) {
-            $year = date('Y');
-        }
-        if(!$month) {
-            $month = date('m');
-        }
-        if(!$fileName) {
-            $fileName = 'salarySheet';
-        }
-        $this->salarySheetGenerator->generateSheet($fileName, $year, $month);
-    }
-
-    protected function execute(InputInterface $input, OutputInterface $output): int
-    {
+       protected function execute(InputInterface $input, OutputInterface $output): int {
         
         $io = new SymfonyStyle($input, $output);
         
-        $fileName = $input->getOption('file');
+        $csvPath = 'report.csv';//$input->getOption('file');
+
         $year = $input->getOption('year');
-        $month = $input->getOption('month');
-        $this->salarySheetGenerator->setFileName($fileName);
-        $this->salarySheetGenerator->setYear($year);
-        $this->salarySheetGenerator->setMonth($month);
+        $csv = $input->getOption('csv');
+        $xls = $input->getOption('xls');
 
-        echo 'Year '.$year.PHP_EOL;
-        echo 'month '.$month.PHP_EOL;
+        $whichYear = $input->getOption('whichYear');
+        $fromWhichMonth = $input->getOption('fromWhichMonth');
 
-        $this->generateReport($fileName, $year, $month);
+        if (!$fromWhichMonth) {
+            if($year || $whichYear!== intval(date('Y')) ) {
+                $fromWhichMonth = '01';
+            } else {
+                $fromWhichMonth = date('m');
+            }
+        }
+
+
+        $this->salarySheetGenerator->generateSheet($csv, $xls, $year, $fromWhichMonth, $whichYear);
         $io->success('Salary sheet Generatetion done!, Pass --help to see different options.');
         
         return Command::SUCCESS;
